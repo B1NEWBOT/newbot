@@ -5,7 +5,7 @@ from btns import *
 from info import bot_bssed
 import os
 from mistralai.client import MistralClient
-from mistralai.models import UserMessage
+from mistralai.models.chat_completion import ChatMessage
 
 # تعيين مفتاح API من متغير البيئة
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
@@ -13,7 +13,7 @@ client = MistralClient(api_key=MISTRAL_API_KEY)
 
 # دالة إرسال الرسائل إلى Mistral AI
 def chat_with_mistral(user_input):
-    messages = [UserMessage(role="user", content=user_input)]
+    messages = [ChatMessage(role="user", content=user_input)]
     response = client.chat(model="mistral-tiny", messages=messages)
     return response.choices[0].message.content
 
