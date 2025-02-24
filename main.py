@@ -1,18 +1,28 @@
-import importlib
 from info import *
 from rep import *
 from botcommand import *
 from btns import *
-import openai
+from info import bot_bssed
 import os
+import mistralai
+from mistralai import ChatMessage
+from mistralai import MistralClient
 
-@bot_bssed.message_handler(func=lambda message: message.reply_to_message and message.reply_to_message.from_user.id == bot_bssed.get_me().id)
-def chat_with_ai(message):
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": message.text}]
-    )
-    bot_bssed.reply_to(message, response["choices"][0]["message"]["content"])
+# تعيين مفتاح API من متغير البيئة
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
+client = MistralClient(api_key=MISTRAL_API_KEY)
+
+# دالة إرسال الرسائل إلى Mistral AI
+def chat_with_mistral(user_input):
+    messages = [ChatMessage(role="user", content=user_input)]
+    response = client.chat(model="mistral-tiny", messages=messages)
+    return response.choices[0].message.content
+
+# الرد عند الرد على رسالة البوت أو عند كتابة "ذكاء"
+@bot_bssed.message_handler(func=lambda message: message.reply_to_message and message.reply_to_message.from_user.id == bot_bssed.get_me().id or "ذكاء" in message.text.lower())
+def ai_response(message):
+    response = chat_with_mistral(message.text)
+    bot_bssed.reply_to(message, response)
 
 @bot_bssed.message_handler(content_types=['new_chat_members','left_chat_members'])
 def cmbmr(m):
