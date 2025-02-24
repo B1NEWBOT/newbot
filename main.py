@@ -7,8 +7,6 @@ import openai
 import os
 
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
 @bot_bssed.message_handler(func=lambda message: message.reply_to_message and message.reply_to_message.from_user.id == bot_bssed.get_me().id)
 def chat_with_ai(message):
     response = openai.ChatCompletion.create(
@@ -33,5 +31,7 @@ def rm(m):
 @bot_bssed.callback_query_handler(func=lambda call : True)
 def calling(call):
     call_result(call)
+
+bot_bssed.remove_webhook()
 
 bot_bssed.infinity_polling(timeout=60, long_polling_timeout=60)
