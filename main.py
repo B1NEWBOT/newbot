@@ -17,8 +17,13 @@ client = MistralClient(api_key=MISTRAL_API_KEY)
 # دالة إرسال الرسائل إلى Mistral AI
 def chat_with_mistral(user_input):
     messages = [ChatMessage(role="user", content=user_input)]
-    response = client.chat(model="mistral-tiny", messages=messages)
-    return response.choices[0].message.content
+    try:
+        response = client.chat(model="mistral-tiny", messages=messages, timeout=10)
+        return response.choices[0].message.content
+    except requests.exceptions.Timeout:
+        return "⏳ الذكاء الاصطناعي لم يستجب في الوقت المحدد، حاول مرة أخرى لاحقًا."
+    except Exception as e:
+        return f"⚠️ حدث خطأ أثناء الاتصال بـ Mistral AI: {e}"
 
 # الرد عند الرد على رسالة البوت أو عند كتابة "ذكاء"
 @bot_bssed.message_handler(func=lambda message: (message.reply_to_message and message.reply_to_message.from_user and message.reply_to_message.from_user.id == bot_bssed.get_me().id) or ("ذكاء" in message.text.lower()))
@@ -29,46 +34,41 @@ def ai_response(message):
     except telebot.apihelper.ApiTelegramException as e:
         print(f"❌ خطأ في الرد على الرسالة: {e}")
 
-def chat_with_mistral(user_input):
-    messages = [ChatMessage(role="user", content=user_input)]
-    try:
-        response = client.chat(model="mistral-tiny", messages=messages, timeout=10)
-        return response.choices[0].message.content
-    except requests.exceptions.Timeout:
-        return "⏳ الذكاء الاصطناعي لم يستجب في الوقت المحدد، حاول مرة أخرى لاحقًا."
-    except Exception as e:
-        return f"⚠️ حدث خطأ أثناء الاتصال بـ Mistral AI: {e}"
-
+# حذف رسائل دخول وخروج الأعضاء
 @bot_bssed.message_handler(content_types=['new_chat_members','left_chat_members'])
 def cmbmr(m):
     bot_bssed.delete_message(m.chat.id,m.message_id)
 
+# تشغيل الأوامر
 @bot_bssed.message_handler(commands=['start','ban'])
 def myc(m):
     my_comd(m)
 
+# استقبال أي رسالة
 @bot_bssed.message_handler(func=lambda m : True)
 def rm(m):
     reply_funk(m)
 
+# استقبال الضغط على الأزرار
 @bot_bssed.callback_query_handler(func=lambda call : True)
 def calling(call):
     call_result(call)
 
+# تشغيل Flask للسيرفر
 app = Flask(__name__)
 
-@app.route('/')  # هذا هو السطر الصحيح لإنشاء مسار في Flask
+@app.route('/')
 def home():
-    return "The bot is running!"
+    return "البوت يعمل بنجاح!"
 
-def run_web():
+def run():
     app.run(host="0.0.0.0", port=8080)
 
 # تشغيل السيرفر في Thread منفصل حتى لا يتوقف البوت
-threading.Thread(target=run_web, daemon=True).start()
+threading.Thread(target=run, daemon=True).start()
 
 # تعطيل Webhook لمنع التعارض
-bot_bssed.remove_webhook()
+requests.get(f"https://api.telegram.org/bot{os.getenv('TOKEN')}/deleteWebhook")
 
 # تشغيل البوت ومنع توقفه عند خطأ 409
 while True:
