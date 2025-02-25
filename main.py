@@ -4,6 +4,7 @@ from botcommand import *
 from btns import *
 from info import bot_bssed
 import os
+import requests
 from mistralai.client import MistralClient
 from mistralai.models.chat_completion import ChatMessage
 
@@ -18,10 +19,23 @@ def chat_with_mistral(user_input):
     return response.choices[0].message.content
 
 # الرد عند الرد على رسالة البوت أو عند كتابة "ذكاء"
-@bot_bssed.message_handler(func=lambda message: message.reply_to_message and message.reply_to_message.from_user.id == bot_bssed.get_me().id or "ذكاء" in message.text.lower())
+@bot_bssed.message_handler(func=lambda message: (message.reply_to_message and message.reply_to_message.from_user and message.reply_to_message.from_user.id == bot_bssed.get_me().id) or ("ذكاء" in message.text.lower()))
 def ai_response(message):
-    response = chat_with_mistral(message.text)
-    bot_bssed.reply_to(message, response)
+    try:
+        response = chat_with_mistral(message.text)
+        bot_bssed.reply_to(message, response)
+    except telebot.apihelper.ApiTelegramException as e:
+        print(f"❌ خطأ في الرد على الرسالة: {e}")
+
+def chat_with_mistral(user_input):
+    messages = [ChatMessage(role="user", content=user_input)]
+    try:
+        response = client.chat(model="mistral-tiny", messages=messages, timeout=10)
+        return response.choices[0].message.content
+    except requests.exceptions.Timeout:
+        return "⏳ الذكاء الاصطناعي لم يستجب في الوقت المحدد، حاول مرة أخرى لاحقًا."
+    except Exception as e:
+        return f"⚠️ حدث خطأ أثناء الاتصال بـ Mistral AI: {e}"
 
 @bot_bssed.message_handler(content_types=['new_chat_members','left_chat_members'])
 def cmbmr(m):
