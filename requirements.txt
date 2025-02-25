@@ -3,3 +3,4 @@ mistralai
 mistralai==0.4.2
 requests
 flask
+gunicorn
