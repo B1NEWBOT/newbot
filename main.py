@@ -23,14 +23,14 @@ CHAT_ID = os.getenv("CHAT_ID")  # استبدل هذا بالمعرف الصحي�
 def send_keep_alive():
     try:
         # إرسال رسالة "Keep Alive" للحفاظ على نشاط البوت
-        bot_bssed.send_message(CHAT_ID, "رسالة إبقاء البوت نشطًا")
+        bot_bssed.send_message(CHAT_ID, "بعدني عايش الحمدلله")
         print("تم إرسال رسالة keep alive")
     except Exception as e:
         print(f"خطأ أثناء إرسال رسالة keep alive: {e}")
 
 def run_scheduler():
-    # جدولة المهمة لتعمل كل 30 دقيقة
-    schedule.every(30).minutes.do(send_keep_alive)
+    # جدولة المهمة لتعمل كل 15 دقيقة
+    schedule.every(15).minutes.do(send_keep_alive)
     while True:
         schedule.run_pending()
         time.sleep(1)
