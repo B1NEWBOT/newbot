@@ -62,10 +62,11 @@ def home():
     return "البوت يعمل بنجاح!"
 
 def run():
-    app.run(host="0.0.0.0", port=8080)
-
-# تشغيل السيرفر في Thread منفصل حتى لا يتوقف البوت
-threading.Thread(target=run, daemon=True).start()
+    if not os.getenv('REPL_SLUG'):  # Local development
+        app.run(host="0.0.0.0", port=8080)
+    
+if not os.getenv('REPL_SLUG'):  # Local development
+    threading.Thread(target=run, daemon=True).start()
 
 # تعطيل Webhook لمنع التعارض
 requests.get(f"https://api.telegram.org/bot{os.getenv('TOKEN')}/deleteWebhook")
