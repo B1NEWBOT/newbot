@@ -55,14 +55,14 @@ def rm(m):
 def calling(call):
     call_result(call)
 
-    app = Flask(__name__)
+app = Flask(__name__)
 
-@bot_bssed.route('/')
+@app.route('/')  # هذا هو السطر الصحيح لإنشاء مسار في Flask
 def home():
     return "The bot is running!"
 
 def run_web():
-    bot_bssed.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8080)
 
 # تشغيل السيرفر في Thread منفصل حتى لا يتوقف البوت
 threading.Thread(target=run_web, daemon=True).start()
