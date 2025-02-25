@@ -10,6 +10,36 @@ from mistralai.models.chat_completion import ChatMessage
 from flask import Flask
 import threading
 
+#رسالة دورية
+import schedule
+import time
+import threading
+from info import bot_bssed  # تأكد أن bot_bssed هو كائن البوت
+
+# تأكد من تحديد معرف الدردشة (CHAT_ID) الذي تريد إرسال رسالة إليه
+# يمكن أن يكون معرف دردشة خاصة بك أو مجموعة مخصصة لهذا الغرض.
+CHAT_ID = 1799827532  # استبدل هذا بالمعرف الصحيح
+
+def send_keep_alive():
+    try:
+        # إرسال رسالة "Keep Alive" للحفاظ على نشاط البوت
+        bot_bssed.send_message(CHAT_ID, "رسالة إبقاء البوت نشطًا")
+        print("تم إرسال رسالة keep alive")
+    except Exception as e:
+        print(f"خطأ أثناء إرسال رسالة keep alive: {e}")
+
+def run_scheduler():
+    # جدولة المهمة لتعمل كل 30 دقيقة
+    schedule.every(30).minutes.do(send_keep_alive)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+# تشغيل المجدول في خيط منفصل
+scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+scheduler_thread.start()
+#نهاية كود رسالة دورية
+
 # تعيين مفتاح API من متغير البيئة
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 client = MistralClient(api_key=MISTRAL_API_KEY)
