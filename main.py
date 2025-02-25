@@ -7,6 +7,8 @@ import os
 import requests
 from mistralai.client import MistralClient
 from mistralai.models.chat_completion import ChatMessage
+from flask import Flask
+import threading
 
 # تعيين مفتاح API من متغير البيئة
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
@@ -52,6 +54,18 @@ def rm(m):
 @bot_bssed.callback_query_handler(func=lambda call : True)
 def calling(call):
     call_result(call)
+
+    app = Flask(__name__)
+
+@bot_bssed.route('/')
+def home():
+    return "The bot is running!"
+
+def run_web():
+    bot_bssed.run(host="0.0.0.0", port=8080)
+
+# تشغيل السيرفر في Thread منفصل حتى لا يتوقف البوت
+threading.Thread(target=run_web, daemon=True).start()
 
 # تعطيل Webhook لمنع التعارض
 bot_bssed.remove_webhook()
