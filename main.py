@@ -8,7 +8,8 @@ import requests
 from mistralai.client import MistralClient
 from mistralai.models.chat_completion import ChatMessage
 from flask import Flask
-import threading
+import threading 
+from threading import Thread
 
 #رسالة دورية
 import schedule
@@ -92,18 +93,13 @@ def home():
     return "البوت يعمل بنجاح!"
 
 def run():
-    if not os.getenv('REPL_SLUG'):  # Local development
-        app.run(host="0.0.0.0", port=8080)
-    
-if not os.getenv('REPL_SLUG'):  # Local development
-    threading.Thread(target=run, daemon=True).start()
+    app.run(host="0.0.0.0", port=8080)
+
+Thread(target=run).start()
 
 # تعطيل Webhook لمنع التعارض
 requests.get(f"https://api.telegram.org/bot{os.getenv('TOKEN')}/deleteWebhook")
 
 # تشغيل البوت ومنع توقفه عند خطأ 409
 while True:
-    try:
-        bot_bssed.infinity_polling(timeout=60, long_polling_timeout=60)
-    except Exception as e:
-        print(f"حدث خطأ: {e}")
+    print("المشروع يعمل في الخلفية...")
