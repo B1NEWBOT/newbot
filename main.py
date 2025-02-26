@@ -11,6 +11,31 @@ from flask import Flask
 import threading 
 from threading import Thread
 
+#جعل البوت اكثر كفائة 
+from flask import Flask, request
+import telebot
+
+app = Flask(__name__)
+took = os.getenv("TOKEN")
+bot_bssed=telebot.TeleBot(took)
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    if request.headers.get('content-type') == 'application/json':
+        json_string = request.get_data().decode('utf-8')
+        update = telebot.types.Update.de_json(json_string)
+        bot_bssed.process_new_updates([update])
+        return '', 200
+    else:
+        return 'Unsupported Media Type', 415
+
+if __name__ == '__main__':
+    # إزالة الـ webhook القديم ثم تسجيل الجديد بعنوان التطبيق
+    bot_bssed.remove_webhook()
+    bot_bssed.set_webhook(url='https://Bony.husssain078.repl.co/webhook')
+    app.run(host="0.0.0.0", port=8080)
+    #نهاية كود جعل البوت اكثر كفائة
+
 #رسالة دورية
 import schedule
 import time
@@ -49,12 +74,16 @@ client = MistralClient(api_key=MISTRAL_API_KEY)
 def chat_with_mistral(user_input):
     messages = [ChatMessage(role="user", content=user_input)]
     try:
-        response = client.chat(model="mistral-tiny", messages=messages, timeout=10)
+        response = client.chat(model="mistral-tiny", messages=messages)
+        if not response.choices:
+            return "⚠️ عذراً، لم يتم الحصول على رد من الذكاء الاصطناعي. حاول مرة أخرى."
         return response.choices[0].message.content
     except requests.exceptions.Timeout:
         return "⏳ الذكاء الاصطناعي لم يستجب في الوقت المحدد، حاول مرة أخرى لاحقًا."
     except Exception as e:
-        return f"⚠️ حدث خطأ أثناء الاتصال بـ Mistral AI: {e}"
+        if "translation" in str(e).lower():
+            return "⚠️ عذراً، حدث خطأ في الترجمة. الرجاء المحاولة مرة أخرى بصياغة مختلفة."
+        return "⚠️ عذراً، حدث خطأ في المعالجة. الرجاء المحاولة مرة أخرى."
 
 # الرد عند الرد على رسالة البوت أو عند كتابة "ذكاء"
 @bot_bssed.message_handler(func=lambda message: (message.reply_to_message and message.reply_to_message.from_user and message.reply_to_message.from_user.id == bot_bssed.get_me().id) or ("ذكاء" in message.text.lower()))
@@ -85,21 +114,10 @@ def rm(m):
 def calling(call):
     call_result(call)
 
-# تشغيل Flask للسيرفر
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "البوت يعمل بنجاح!"
-
-def run():
-    app.run(host="0.0.0.0", port=8080)
-
-Thread(target=run).start()
-
-# تعطيل Webhook لمنع التعارض
-requests.get(f"https://api.telegram.org/bot{os.getenv('TOKEN')}/deleteWebhook")
-
 # تشغيل البوت ومنع توقفه عند خطأ 409
 while True:
-    print("المشروع يعمل في الخلفية...")
+    try:
+        bot_bssed.polling(non_stop=True, interval=0)
+    except Exception as e:
+        print(f"خطأ في البوت: {e}""\n""يتم تشغيل البوت مرة اخرى...")
+        time.sleep(5)
