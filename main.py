@@ -1,10 +1,14 @@
+import telebot
+from flask import Flask, request
+from threading import Thread
+
+app = Flask('')
+
 import os
 import time
 import threading
 import requests
 import schedule
-from flask import Flask, request
-import telebot
 from mistralai.client import MistralClient
 from mistralai.models.chat_completion import ChatMessage
 
@@ -13,11 +17,6 @@ from info import *      # تأكد من أن هذه الملفات موجودة 
 from rep import *
 from botcommand import *
 from btns import *
-
-# إنشاء تطبيق Flask وتكوين بوت Telegram
-app = Flask(__name__)
-token = os.getenv("TOKEN")
-bot_bssed = telebot.TeleBot(token)
 
 # إعداد دالة للتواصل مع Mistral AI
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
@@ -36,22 +35,6 @@ def chat_with_mistral(user_input):
         if "translation" in str(e).lower():
             return "⚠️ عذراً، حدث خطأ في الترجمة. الرجاء المحاولة مرة أخرى بصياغة مختلفة."
         return "⚠️ عذراً، حدث خطأ في المعالجة. الرجاء المحاولة مرة أخرى."
-
-# إعداد نقطة النهاية الخاصة بالـ Webhook
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    if request.headers.get('content-type') == 'application/json':
-        json_string = request.get_data().decode('utf-8')
-        update = telebot.types.Update.de_json(json_string)
-        bot_bssed.process_new_updates([update])
-        return '', 200
-    else:
-        return 'Unsupported Media Type', 415
-
-# صفحة بسيطة للتحقق من عمل التطبيق
-@app.route('/')
-def home():
-    return "🚀 التطبيق يعمل بنجاح!"
 
 # إعداد رسالة دورية (Keep Alive) لإرسال رسالة كل 15 دقيقة
 CHAT_ID = os.getenv("CHAT_ID")  # تأكد من تعيين معرف الدردشة الصحيح في متغير البيئة
@@ -100,9 +83,17 @@ def handle_all(m):
 def handle_callback(call):
     call_result(call)
 
-# نقطة الدخول الرئيسية: إزالة الـ webhook القديم وتعيين الجديد ثم تشغيل Flask
-if __name__ == '__main__':
-    bot_bssed.remove_webhook()
-    # تأكد من أن الرابط التالي صحيح (يجب أن يكون رابط مشروعك على Replit)
-    bot_bssed.set_webhook(url='https://bony.husssain078.repl.co/webhook')
-    app.run(host="0.0.0.0", port=8080)
+@app.route('/')
+def home():
+    return "<b>telegram @l4vl4</b>"
+def run():
+    app.run(host='0.0.0.0', port=8080)
+def keep_alive():
+    t = Thread(target=run)
+    t.start
+
+if __name__ == "__main__":
+
+    keep_alive()
+
+    bot_bssed.infinity_polling(skip_pending=True)
